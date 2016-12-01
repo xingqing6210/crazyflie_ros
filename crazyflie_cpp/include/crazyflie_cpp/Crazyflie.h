@@ -5,6 +5,7 @@
 #include "Crazyradio.h"
 #include "crtp.h"
 #include <list>
+#include <array>
 #include <set>
 #include <map>
 #include <iostream>
@@ -74,6 +75,13 @@ public:
     float pitch,
     float yawrate,
     uint16_t thrust);
+
+  void sendFullControl(
+    bool enable,
+    float xpos, float xvel, float xacc, float xjerk,
+    float ypos, float yvel, float yacc, float yjerk,
+    float zpos, float zvel, float zacc, float zjerk,
+    float yawpos, float yawvel);
 
   void sendExternalPositionUpdate(
     float x,

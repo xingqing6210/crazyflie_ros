@@ -34,6 +34,7 @@ include_directories(
 
 ## Declare a cpp library
 add_library(crazyflie_cpp
+  src/crtp.cpp
   src/Crazyradio.cpp
   src/Crazyflie.cpp
 )

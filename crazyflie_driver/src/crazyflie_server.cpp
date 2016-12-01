@@ -2,6 +2,7 @@
 #include "crazyflie_driver/AddCrazyflie.h"
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
+#include "crazyflie_driver/FullControl.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "std_srvs/Empty.h"
@@ -66,6 +67,7 @@ public:
     , m_serviceUpdateParams()
     , m_subscribeCmdVel()
     , m_subscribeExternalPosition()
+    , m_subscribeFullControl()
     , m_pubImu()
     , m_pubTemp()
     , m_pubMag()
@@ -74,10 +76,13 @@ public:
     , m_pubRssi()
     , m_sentSetpoint(false)
     , m_sentExternalPosition(false)
+    , m_sentFullControl(false)
+    , m_controlEnabled(true)
   {
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
+    m_subscribeFullControl = n.subscribe(tf_prefix + "/full_control", 1, &CrazyflieROS::fullControlChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     if (m_enable_logging_imu) {
@@ -138,6 +143,7 @@ private:
   {
     ROS_FATAL("Emergency requested!");
     m_isEmergency = true;
+    m_controlEnabled = false;
 
     return true;
   }
@@ -214,6 +220,17 @@ private:
     m_cf.sendExternalPositionUpdate(msg->point.x, msg->point.y, msg->point.z);
     m_sentExternalPosition = true;
   }
+
+  void fullControlChanged(
+    const crazyflie_driver::FullControl::ConstPtr& msg)
+  {
+    m_cf.sendFullControl(msg->enable && m_controlEnabled,
+    msg->x[0], msg->x[1], msg->x[2], msg->x[3],
+    msg->y[0], msg->y[1], msg->y[2], msg->y[3],
+    msg->z[0], msg->z[1], msg->z[2], msg->z[3],
+    msg->yaw[0], msg->yaw[1]);
+    m_sentFullControl = true;
+}
 
   void run()
   {
@@ -342,17 +359,22 @@ private:
 
     while(!m_isEmergency) {
       // make sure we ping often enough to stream data out
-      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition) {
+      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition && !m_sentFullControl) {
         m_cf.sendPing();
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
+      m_sentFullControl = false;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     // Make sure we turn the engines off
     for (int i = 0; i < 100; ++i) {
-       m_cf.sendSetpoint(0, 0, 0, 0);
+       m_cf.sendFullControl(false,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0);
     }
 
   }
@@ -477,6 +499,7 @@ private:
   ros::ServiceServer m_serviceUpdateParams;
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeExternalPosition;
+  ros::Subscriber m_subscribeFullControl;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
@@ -485,7 +508,7 @@ private:
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
-  bool m_sentSetpoint, m_sentExternalPosition;
+  bool m_sentSetpoint, m_sentExternalPosition, m_sentFullControl, m_controlEnabled;
 
   std::thread m_thread;
 };
