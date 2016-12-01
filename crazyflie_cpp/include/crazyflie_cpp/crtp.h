@@ -382,6 +382,64 @@ struct crtpExternalPositionUpdate
   float z;
 }  __attribute__((packed));
 
+// Port 0x07 (Control)
+
+extern uint16_t single2half(float number);
+
+struct crtpLinearControlReference {
+  crtpLinearControlReference(
+    float _pos,
+    float _vel,
+    float _acc,
+    float _jerk)
+  {
+    pos = single2half(_pos);
+    vel = single2half(_vel);
+    acc = single2half(_acc);
+    jerk = single2half(_jerk);
+  }
+  uint16_t pos; // use uint16_t to hold float16_t
+  uint16_t vel; // use uint16_t to hold float16_t
+  uint16_t acc;
+  uint16_t jerk;
+} __attribute__((packed));
+
+struct crtpAngularControlReference {
+  crtpAngularControlReference(
+    float _pos,
+    float _vel)
+  {
+    pos = single2half(_pos);
+    vel = single2half(_vel);
+  }
+  uint16_t pos; // use uint16_t to hold float16_t
+  uint16_t vel; // use uint16_t to hold float16_t
+} __attribute__((packed)) ;
+
+struct crtpControlPacket {
+  crtpControlPacket(
+    bool enable,
+    float xpos, float xvel, float xacc, float xjerk,
+    float ypos, float yvel, float yacc, float yjerk,
+    float zpos, float zvel, float zacc, float zjerk,
+    float yawpos, float yawvel)
+  : header(0x07,0)
+  , enable(enable)
+  , x(xpos, xvel, xacc, xjerk)
+  , y(ypos, yvel, yacc, yjerk)
+  , z(zpos, zvel, zacc, zjerk)
+  , yaw(yawpos, yawvel)
+  {
+  }
+
+  const crtp header;
+  uint8_t enable;
+  crtpLinearControlReference x; // size 8
+  crtpLinearControlReference y; // size 8
+  crtpLinearControlReference z; // size 8
+  crtpAngularControlReference yaw; // size 4
+} __attribute__((packed)) ;
+
 
 
 // Port 13 (Platform)

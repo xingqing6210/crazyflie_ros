@@ -40,6 +40,7 @@ add_message_files(
   FILES
   LogBlock.msg
   GenericLogData.msg
+  FullControl.msg
 )
 
 ## Generate added messages and services with any dependencies listed here

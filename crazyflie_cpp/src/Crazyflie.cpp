@@ -117,6 +117,21 @@ void Crazyflie::sendExternalPositionUpdate(
   sendPacket((const uint8_t*)&position, sizeof(position));
 }
 
+void Crazyflie::sendFullControl(
+    bool enable,
+    float xpos, float xvel, float xacc, float xjerk,
+    float ypos, float yvel, float yacc, float yjerk,
+    float zpos, float zvel, float zacc, float zjerk,
+    float yawpos, float yawvel)
+{
+  crtpControlPacket control(enable,
+    xpos, xvel, xacc, xjerk,
+    ypos, yvel, yacc, yjerk,
+    zpos, zvel, zacc, zjerk,
+    yawpos, yawvel);
+  sendPacket((const uint8_t*)&control, sizeof(control)); 
+}
+
 void Crazyflie::sendPing()
 {
   uint8_t ping = 0xFF;
