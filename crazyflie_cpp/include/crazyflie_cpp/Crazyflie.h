@@ -88,6 +88,13 @@ public:
     float y,
     float z);
 
+  void sendTrajectorySequence(
+    float data1, float data2, float data3, float data4, float data5, float data6, // Data field
+    float time,                                                                   // Time
+    uint8_t index,                                                                // Index
+    uint8_t dimension,                                                            // Dimension and type
+    uint8_t number);                                                             // Number of points
+
   void sendPing();
 
   void reboot();
