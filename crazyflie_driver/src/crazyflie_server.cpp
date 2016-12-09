@@ -3,6 +3,7 @@
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/FullControl.h"
+#include "crazyflie_driver/TrajectorySequence.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "std_srvs/Empty.h"
@@ -68,6 +69,7 @@ public:
     , m_subscribeCmdVel()
     , m_subscribeExternalPosition()
     , m_subscribeFullControl()
+    , m_subscribeTrajectorySequence()
     , m_pubImu()
     , m_pubTemp()
     , m_pubMag()
@@ -77,12 +79,15 @@ public:
     , m_sentSetpoint(false)
     , m_sentExternalPosition(false)
     , m_sentFullControl(false)
+    , m_sentTrajectorySequence(false)
     , m_controlEnabled(true)
+    , m_trajectorySequenceEnabled(true)
   {
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_subscribeFullControl = n.subscribe(tf_prefix + "/full_control", 1, &CrazyflieROS::fullControlChanged, this);
+    m_subscribeTrajectorySequence = n.subscribe(tf_prefix + "/trajectory_sequence", 1, &CrazyflieROS::trajectorySequenceChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     if (m_enable_logging_imu) {
@@ -230,7 +235,19 @@ private:
     msg->z[0], msg->z[1], msg->z[2], msg->z[3],
     msg->yaw[0], msg->yaw[1]);
     m_sentFullControl = true;
-}
+  }
+
+  void trajectorySequenceChanged(
+    const crazyflie_driver::TrajectorySequence::ConstPtr& msg)
+  {
+    m_cf.sendTrajectorySequence(
+    msg->data0, msg->data1, msg->data2, msg->data3, msg->data4, msg->data5,
+    msg->time,
+    msg->index,
+    msg->dimension,
+    msg->number);
+    m_sentTrajectorySequence = true;
+  }
 
   void run()
   {
@@ -359,12 +376,13 @@ private:
 
     while(!m_isEmergency) {
       // make sure we ping often enough to stream data out
-      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition && !m_sentFullControl) {
+      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition && !m_sentFullControl && !m_sentTrajectorySequence) {
         m_cf.sendPing();
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
       m_sentFullControl = false;
+      m_sentTrajectorySequence = false;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
@@ -500,6 +518,7 @@ private:
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeFullControl;
+  ros::Subscriber m_subscribeTrajectorySequence;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
@@ -509,6 +528,7 @@ private:
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
   bool m_sentSetpoint, m_sentExternalPosition, m_sentFullControl, m_controlEnabled;
+  bool m_sentTrajectorySequence, m_trajectorySequenceEnabled;
 
   std::thread m_thread;
 };

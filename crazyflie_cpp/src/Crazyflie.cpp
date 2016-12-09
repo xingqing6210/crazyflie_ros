@@ -132,6 +132,23 @@ void Crazyflie::sendFullControl(
   sendPacket((const uint8_t*)&control, sizeof(control)); 
 }
 
+// Trajectory
+void Crazyflie::sendTrajectorySequence(
+  float data0, float data1, float data2, float data3, float data4, float data5,
+  float time,
+  uint8_t index,
+  uint8_t dimension,
+  uint8_t number)
+{
+  crtpTrajectoryPacket trajectory(
+    data0, data1, data2, data3, data4, data5,
+    time,
+    index,
+    dimension,
+    number);
+  sendPacket((const uint8_t*)&trajectory, sizeof(trajectory)); 
+}
+
 void Crazyflie::sendPing()
 {
   uint8_t ping = 0xFF;

@@ -409,7 +409,7 @@ struct crtpAngularControlReference {
     float _pos,
     float _vel)
   {
-    pos = single2half(_pos);
+    pos = (_pos);
     vel = single2half(_vel);
   }
   uint16_t pos; // use uint16_t to hold float16_t
@@ -440,7 +440,39 @@ struct crtpControlPacket {
   crtpAngularControlReference yaw; // size 4
 } __attribute__((packed)) ;
 
-
+// Port 0x08 (trajectory sequence)
+struct crtpTrajectoryPacket {
+  crtpTrajectoryPacket(
+    float _data0, float _data1, float _data2, float _data3, float _data4, float _data5,
+    float _time,
+    uint8_t index,
+    uint8_t dimension,
+    uint8_t number)
+  : header(0x08,0),
+  index(index),
+  dimension(dimension),
+  number(number)
+  {
+    data0 = single2half(_data0);
+    data1 = single2half(_data1);
+    data2 = single2half(_data2);
+    data3 = single2half(_data3);
+    data4 = single2half(_data4);
+    data5 = single2half(_data5);
+    time = single2half(_time);
+  }
+  const crtp header;
+  uint16_t data0;
+  uint16_t data1;
+  uint16_t data2;
+  uint16_t data3;
+  uint16_t data4;
+  uint16_t data5;
+  uint16_t time;
+  uint8_t index;
+  uint8_t dimension;
+  uint8_t number;
+} __attribute__((packed));
 
 // Port 13 (Platform)
 
