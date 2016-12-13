@@ -3,7 +3,9 @@
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/FullControl.h"
-#include "crazyflie_driver/TrajectorySequence.h"
+#include "crazyflie_driver/SynchronizationPacket.h"
+#include "crazyflie_driver/TrajectoryPacket.h"
+#include "crazyflie_driver/PointPacket.h"
 #include "crazyflie_driver/GenericLogData.h"
 #include "crazyflie_driver/UpdateParams.h"
 #include "std_srvs/Empty.h"
@@ -69,7 +71,9 @@ public:
     , m_subscribeCmdVel()
     , m_subscribeExternalPosition()
     , m_subscribeFullControl()
-    , m_subscribeTrajectorySequence()
+    , m_subscribeTrajectoryPacket()
+    , m_subscribeSynchronizationPacket()
+    , m_subscribePointPacket()
     , m_pubImu()
     , m_pubTemp()
     , m_pubMag()
@@ -79,15 +83,21 @@ public:
     , m_sentSetpoint(false)
     , m_sentExternalPosition(false)
     , m_sentFullControl(false)
-    , m_sentTrajectorySequence(false)
+    , m_sentPointPacket(false)
+    , m_sentTrajectoryPacket(false)
+    , m_sentSynchronizationPacket(false)
     , m_controlEnabled(true)
-    , m_trajectorySequenceEnabled(true)
+    , m_pointPacketEnabled(true)
+    , m_trajectoryPacketEnabled(true)
+    , m_synchronizationPacketEnabled(true)
   {
     ros::NodeHandle n;
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_subscribeFullControl = n.subscribe(tf_prefix + "/full_control", 1, &CrazyflieROS::fullControlChanged, this);
-    m_subscribeTrajectorySequence = n.subscribe(tf_prefix + "/trajectory_sequence", 1, &CrazyflieROS::trajectorySequenceChanged, this);
+    m_subscribePointPacket = n.subscribe(tf_prefix + "/point_packet", 1, &CrazyflieROS::pointPacketChanged, this);
+    m_subscribeTrajectoryPacket = n.subscribe(tf_prefix + "/trajectory_packet", 1, &CrazyflieROS::trajectoryPacketChanged, this);
+    m_subscribeSynchronizationPacket = n.subscribe(tf_prefix + "/synchronization_packet", 1, &CrazyflieROS::synchronizationPacketChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     if (m_enable_logging_imu) {
@@ -237,16 +247,44 @@ private:
     m_sentFullControl = true;
   }
 
-  void trajectorySequenceChanged(
-    const crazyflie_driver::TrajectorySequence::ConstPtr& msg)
+  void synchronizationPacketChanged(
+    const crazyflie_driver::SynchronizationPacket::ConstPtr& msg)
   {
-    m_cf.sendTrajectorySequence(
-    msg->data0, msg->data1, msg->data2, msg->data3, msg->data4, msg->data5,
-    msg->time,
-    msg->index,
-    msg->dimension,
-    msg->number);
-    m_sentTrajectorySequence = true;
+    m_cf.sendSynchronizationPacket(
+    0, // The packet type corresponding to a synchronization data object
+    msg->synchronize,
+    msg->circular[0], msg->circular[1], msg->circular[2], msg->circular[3],
+    msg->number[0], msg->number[1], msg->number[2], msg->number[3],
+    msg->time[0], msg->time[1], msg->time[2], msg->time[3]);
+    m_sentSynchronizationPacket = true;
+    ROS_INFO("Called sendSynchronizationPacket properly.");
+  }
+
+  void trajectoryPacketChanged(
+    const crazyflie_driver::TrajectoryPacket::ConstPtr& msg)
+  {
+    m_cf.sendTrajectoryPacket(
+    1, // The packet type corresponding to a trajectory data object
+    msg->data[0], msg->data[1], msg->data[2],
+    msg->data[3], msg->data[4], msg->data[5],
+    msg->time, msg->index, msg->dimension,
+    msg->number, msg->type);
+    m_sentTrajectoryPacket = true;
+    ROS_INFO("Called sendTrajectoryPacket properly.");
+  }
+
+  void pointPacketChanged(
+    const crazyflie_driver::PointPacket::ConstPtr& msg)
+  {
+    m_cf.sendPointPacket(
+    2, // The packet type corresponding to a point in flat output space (up to 3rd derivatives)
+    msg->enable && m_controlEnabled,
+    msg->x[0], msg->x[1], msg->x[2], msg->x[3],
+    msg->y[0], msg->y[1], msg->y[2], msg->y[3],
+    msg->z[0], msg->z[1], msg->z[2], msg->z[3],
+    msg->yaw[0], msg->yaw[1]);
+    m_sentPointPacket = true;
+    ROS_INFO("Called sendPointPacket properly.");
   }
 
   void run()
@@ -376,13 +414,21 @@ private:
 
     while(!m_isEmergency) {
       // make sure we ping often enough to stream data out
-      if (m_enableLogging && !m_sentSetpoint && !m_sentExternalPosition && !m_sentFullControl && !m_sentTrajectorySequence) {
+      if (m_enableLogging &&
+          !m_sentSetpoint &&
+          !m_sentExternalPosition &&
+          !m_sentFullControl &&
+          !m_sentTrajectoryPacket &&
+          !m_sentSynchronizationPacket &&
+          !m_sentPointPacket) {
         m_cf.sendPing();
       }
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
       m_sentFullControl = false;
-      m_sentTrajectorySequence = false;
+      m_sentTrajectoryPacket = false;
+      m_sentSynchronizationPacket = false;
+      m_sentPointPacket = false;
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
@@ -518,7 +564,9 @@ private:
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeFullControl;
-  ros::Subscriber m_subscribeTrajectorySequence;
+  ros::Subscriber m_subscribeSynchronizationPacket;
+  ros::Subscriber m_subscribeTrajectoryPacket;
+  ros::Subscriber m_subscribePointPacket;
   ros::Publisher m_pubImu;
   ros::Publisher m_pubTemp;
   ros::Publisher m_pubMag;
@@ -528,7 +576,9 @@ private:
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
   bool m_sentSetpoint, m_sentExternalPosition, m_sentFullControl, m_controlEnabled;
-  bool m_sentTrajectorySequence, m_trajectorySequenceEnabled;
+  bool m_sentSynchronizationPacket, m_synchronizationPacketEnabled;
+  bool m_sentTrajectoryPacket, m_trajectoryPacketEnabled;
+  bool m_sentPointPacket, m_pointPacketEnabled;
 
   std::thread m_thread;
 };

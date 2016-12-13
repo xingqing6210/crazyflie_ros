@@ -41,7 +41,9 @@ add_message_files(
   LogBlock.msg
   GenericLogData.msg
   FullControl.msg
-  TrajectorySequence.msg
+  TrajectoryPacket.msg
+  SynchronizationPacket.msg
+  PointPacket.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
