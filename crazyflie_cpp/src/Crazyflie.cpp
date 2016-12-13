@@ -132,6 +132,69 @@ void Crazyflie::sendFullControl(
   sendPacket((const uint8_t*)&control, sizeof(control)); 
 }
 
+// Point packet
+void Crazyflie::sendPointPacket(
+    uint8_t packetType,
+    bool enable,
+    float xpos, float xvel, float xacc, float xjerk,
+    float ypos, float yvel, float yacc, float yjerk,
+    float zpos, float zvel, float zacc, float zjerk,
+    float yawpos, float yawvel)
+{
+  crtpPointPacket pointPacket(
+    packetType, enable,
+    xpos, xvel, xacc, xjerk,
+    ypos, yvel, yacc, yjerk,
+    zpos, zvel, zacc, zjerk,
+    yawpos, yawvel);
+  bool status;
+  status = sendPacket((const uint8_t*)&pointPacket, sizeof(pointPacket)); 
+  if (status == true){
+    std::cout << "Point packet sent succesfully &d!";
+    std::cout << sizeof(pointPacket);
+  } else {
+    std::cout << "Point packet failed ack!";
+  }
+}
+
+// Synchronization packet
+void Crazyflie::sendSynchronizationPacket(
+  uint8_t packetType,
+  uint8_t synchronize,
+  uint8_t circular0, uint8_t circular1, uint8_t circular2, uint8_t circular3,
+  uint8_t number0, uint8_t number1, uint8_t number2, uint8_t number3, 
+  float time0, float time1, float time2, float time3)
+{
+  crtpSynchronizationPacket syncPacket(
+    packetType,
+    synchronize,
+    circular0, circular1, circular2, circular3,
+    number0, number1, number2, number3,
+    time0, time1, time2, time3);
+  sendPacket((const uint8_t*)&syncPacket, sizeof(syncPacket)); 
+}
+
+// Trajectory packet
+void Crazyflie::sendTrajectoryPacket(
+  uint8_t packetType,
+  float data0, float data1, float data2, float data3, float data4, float data5,
+  float time,
+  uint8_t index,
+  uint8_t dimension,
+  uint8_t number,
+  uint8_t type)
+{
+  crtpTrajectoryPacket trajectory(
+    packetType,
+    data0, data1, data2, data3, data4, data5,
+    time,
+    index,
+    dimension,
+    number,
+    type);
+  sendPacket((const uint8_t*)&trajectory, sizeof(trajectory)); 
+}
+
 void Crazyflie::sendPing()
 {
   uint8_t ping = 0xFF;
