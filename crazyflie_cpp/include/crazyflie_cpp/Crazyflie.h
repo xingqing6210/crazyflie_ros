@@ -88,12 +88,32 @@ public:
     float y,
     float z);
 
-  void sendTrajectorySequence(
-    float data1, float data2, float data3, float data4, float data5, float data6, // Data field
-    float time,                                                                   // Time
-    uint8_t index,                                                                // Index
-    uint8_t dimension,                                                            // Dimension and type
-    uint8_t number);                                                             // Number of points
+  // Trajectory data packet
+  void sendTrajectoryPacket(
+    uint8_t packetType,                                                           
+    float data0, float data1, float data2, float data3, float data4, float data5,
+    float time,                                                   
+    uint8_t index,                                                 
+    uint8_t dimension,                                              
+    uint8_t number,                                                
+    uint8_t type);                                                
+
+  // Loading trajectory settings and synchronizing
+  void sendSynchronizationPacket(
+    uint8_t packetType,                                                
+    uint8_t synchronize,
+    uint8_t circular0, uint8_t circular1, uint8_t circular2, uint8_t circular3,  
+    uint8_t number0, uint8_t number1, uint8_t number2, uint8_t number3,
+    float time0, float time1, float time2, float time3);               
+  
+  // A point in flat output space
+  void sendPointPacket(
+    uint8_t packetType,
+    bool enable,
+    float xpos, float xvel, float xacc, float xjerk,
+    float ypos, float yvel, float yacc, float yjerk,
+    float zpos, float zvel, float zacc, float zjerk,
+    float yawpos, float yawvel);
 
   void sendPing();
 
