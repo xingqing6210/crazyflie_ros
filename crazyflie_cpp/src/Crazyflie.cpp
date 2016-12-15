@@ -135,26 +135,20 @@ void Crazyflie::sendFullControl(
 // Point packet
 void Crazyflie::sendPointPacket(
     uint8_t packetType,
-    bool enable,
+    uint8_t mode,
     float xpos, float xvel, float xacc, float xjerk,
     float ypos, float yvel, float yacc, float yjerk,
     float zpos, float zvel, float zacc, float zjerk,
     float yawpos, float yawvel)
 {
   crtpPointPacket pointPacket(
-    packetType, enable,
+    packetType, mode,
     xpos, xvel, xacc, xjerk,
     ypos, yvel, yacc, yjerk,
     zpos, zvel, zacc, zjerk,
     yawpos, yawvel);
   bool status;
-  status = sendPacket((const uint8_t*)&pointPacket, sizeof(pointPacket)); 
-  if (status == true){
-    std::cout << "Point packet sent succesfully &d!";
-    std::cout << sizeof(pointPacket);
-  } else {
-    std::cout << "Point packet failed ack!";
-  }
+  status = sendPacket((const uint8_t*)&pointPacket, sizeof(pointPacket));
 }
 
 // Synchronization packet

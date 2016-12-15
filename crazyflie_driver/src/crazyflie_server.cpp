@@ -278,13 +278,12 @@ private:
   {
     m_cf.sendPointPacket(
     2, // The packet type corresponding to a point in flat output space (up to 3rd derivatives)
-    msg->enable && m_controlEnabled,
+    m_controlEnabled ? msg->mode : 0,
     msg->x[0], msg->x[1], msg->x[2], msg->x[3],
     msg->y[0], msg->y[1], msg->y[2], msg->y[3],
     msg->z[0], msg->z[1], msg->z[2], msg->z[3],
     msg->yaw[0], msg->yaw[1]);
     m_sentPointPacket = true;
-    ROS_INFO("Called sendPointPacket properly.");
   }
 
   void run()

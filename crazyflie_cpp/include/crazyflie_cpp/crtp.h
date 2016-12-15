@@ -444,14 +444,14 @@ struct crtpControlPacket {
 struct crtpPointPacket {
   crtpPointPacket(
     uint8_t packetType,
-    bool enable,
+    uint8_t mode,
     float xpos, float xvel, float xacc, float xjerk,
     float ypos, float yvel, float yacc, float yjerk,
     float zpos, float zvel, float zacc, float zjerk,
     float yawpos, float yawvel)
   : header(0x08,0)
   , packetType(packetType)
-  , enable(enable)
+  , mode(mode)
   , x(xpos, xvel, xacc, xjerk)
   , y(ypos, yvel, yacc, yjerk)
   , z(zpos, zvel, zacc, zjerk)
@@ -460,7 +460,7 @@ struct crtpPointPacket {
   }
   const crtp header;
   uint8_t packetType;
-  uint8_t enable;
+  uint8_t mode;
   crtpLinearControlReference x;
   crtpLinearControlReference y;
   crtpLinearControlReference z;

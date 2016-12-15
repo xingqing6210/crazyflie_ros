@@ -109,7 +109,7 @@ public:
   // A point in flat output space
   void sendPointPacket(
     uint8_t packetType,
-    bool enable,
+    uint8_t mode,
     float xpos, float xvel, float xacc, float xjerk,
     float ypos, float yvel, float yacc, float yjerk,
     float zpos, float zvel, float zacc, float zjerk,
