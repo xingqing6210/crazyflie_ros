@@ -83,6 +83,13 @@ public:
     uint8_t zmode, float zpos, float zvel, float zacc,
     float yawpos, float yawvel);
 
+  void sendFullControlExternalPosition(
+    bool enable,
+    uint8_t xmode, float xpos, float xvel, float xacc, float xext,
+    uint8_t ymode, float ypos, float yvel, float yacc, float yext,
+    uint8_t zmode, float zpos, float zvel, float zacc, float zext,
+    float yawpos, float yawvel);
+
   void sendExternalPositionUpdate(
     float x,
     float y,
