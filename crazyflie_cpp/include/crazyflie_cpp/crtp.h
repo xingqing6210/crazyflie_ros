@@ -386,165 +386,55 @@ struct crtpExternalPositionUpdate
 
 extern uint16_t single2half(float number);
 
-struct crtpLinearControlReference {
-  crtpLinearControlReference(
-    float _pos,
-    float _vel,
-    float _acc,
-    float _jerk)
-  {
-    pos = single2half(_pos);
-    vel = single2half(_vel);
-    acc = single2half(_acc);
-    jerk = single2half(_jerk);
-  }
-  uint16_t pos; // use uint16_t to hold float16_t
-  uint16_t vel; // use uint16_t to hold float16_t
-  uint16_t acc;
-  uint16_t jerk;
-} __attribute__((packed));
+struct crtpControlPacketHeader {
+  crtpControlPacketHeader(uint8_t xmode, uint8_t ymode, uint8_t zmode, bool enable)
+  : packetHasExternalReference(0)
+  , setEmergency(!enable)
+  , resetEmergency(enable)
+  , controlModeX(xmode)
+  , controlModeY(ymode)
+  , controlModeZ(zmode)
+  {}
+  uint16_t packetHasExternalReference:1;
+  uint16_t setEmergency:1;
+  uint16_t resetEmergency:1;
+  uint16_t controlModeX:3;
+  uint16_t controlModeY:3;
+  uint16_t controlModeZ:3;
+  uint16_t :4;
+} __attribute__((packed)); // size 2
 
-struct crtpAngularControlReference {
-  crtpAngularControlReference(
-    float _pos,
-    float _vel)
-  {
-    pos = (_pos);
-    vel = single2half(_vel);
-  }
-  uint16_t pos; // use uint16_t to hold float16_t
-  uint16_t vel; // use uint16_t to hold float16_t
-} __attribute__((packed)) ;
 
 struct crtpControlPacket {
-  crtpControlPacket(
-    bool enable,
-    float xpos, float xvel, float xacc, float xjerk,
-    float ypos, float yvel, float yacc, float yjerk,
-    float zpos, float zvel, float zacc, float zjerk,
+  crtpControlPacket(bool enable,
+    uint8_t xmode, float xpos, float xvel, float xacc,
+    uint8_t ymode, float ypos, float yvel, float yacc,
+    uint8_t zmode, float zpos, float zvel, float zacc,
     float yawpos, float yawvel)
-  : header(0x07,0)
-  , enable(enable)
-  , x(xpos, xvel, xacc, xjerk)
-  , y(ypos, yvel, yacc, yjerk)
-  , z(zpos, zvel, zacc, zjerk)
-  , yaw(yawpos, yawvel)
+  : header(0x07, 0)
+  , controlHeader(xmode, ymode, zmode, enable)
   {
-  }
+    x[0] = single2half(xpos);
+    x[1] = single2half(xvel);
+    x[2] = single2half(xacc);
 
-  const crtp header;
-  uint8_t enable;
-  crtpLinearControlReference x; // size 8
-  crtpLinearControlReference y; // size 8
-  crtpLinearControlReference z; // size 8
-  crtpAngularControlReference yaw; // size 4
-} __attribute__((packed)) ;
+    y[0] = single2half(ypos);
+    y[1] = single2half(yvel);
+    y[2] = single2half(yacc);
 
-// Port 0x08 (sequence commander)
-struct crtpPointPacket {
-  crtpPointPacket(
-    uint8_t packetType,
-    uint8_t mode,
-    float xpos, float xvel, float xacc, float xjerk,
-    float ypos, float yvel, float yacc, float yjerk,
-    float zpos, float zvel, float zacc, float zjerk,
-    float yawpos, float yawvel)
-  : header(0x08,0)
-  , packetType(packetType)
-  , mode(mode)
-  , x(xpos, xvel, xacc, xjerk)
-  , y(ypos, yvel, yacc, yjerk)
-  , z(zpos, zvel, zacc, zjerk)
-  , yaw(yawpos, yawvel)
-  {
-  }
-  const crtp header;
-  uint8_t packetType;
-  uint8_t mode;
-  crtpLinearControlReference x;
-  crtpLinearControlReference y;
-  crtpLinearControlReference z;
-  crtpAngularControlReference yaw;
-} __attribute__((packed)) ;
+    z[0] = single2half(zpos);
+    z[1] = single2half(zvel);
+    z[2] = single2half(zacc);
 
-struct crtpTrajectoryPacket {
-  crtpTrajectoryPacket(
-    uint8_t packetType,
-    float _data0, float _data1, float _data2, float _data3, float _data4, float _data5,
-    float _time,
-    uint8_t index,
-    uint8_t dimension,
-    uint8_t number,
-    uint8_t type)
-  : header(0x08,0),
-  packetType(packetType),
-  index(index),
-  dimension(dimension),
-  number(number),
-  type(type)
-  {
-    data0 = single2half(_data0);
-    data1 = single2half(_data1);
-    data2 = single2half(_data2);
-    data3 = single2half(_data3);
-    data4 = single2half(_data4);
-    data5 = single2half(_data5);
-    time = single2half(_time);
+    yaw[0] = single2half(yawpos);
+    yaw[1] = single2half(yawvel);
   }
-  const crtp header;
-  uint8_t packetType;
-  uint16_t data0;
-  uint16_t data1;
-  uint16_t data2;
-  uint16_t data3;
-  uint16_t data4;
-  uint16_t data5;
-  uint16_t time;
-  uint8_t index;
-  uint8_t dimension;
-  uint8_t number;
-  uint8_t type;
-} __attribute__((packed));
-
-struct crtpSynchronizationPacket {
-  crtpSynchronizationPacket(
-    uint8_t packetType,
-    uint8_t synchronize,
-    uint8_t circular0, uint8_t circular1, uint8_t circular2, uint8_t circular3,
-    uint8_t number0, uint8_t number1, uint8_t number2, uint8_t number3, 
-    float _time0, float _time1, float _time2, float _time3)
-  : header(0x08,0),
-  packetType(packetType),
-  synchronize(synchronize),
-  circular0(circular0),
-  circular1(circular1),
-  circular2(circular2),
-  circular3(circular3),
-  number0(number0),
-  number1(number1),
-  number2(number2),
-  number3(number3)
-  {
-    time0 = single2half(_time0);
-    time1 = single2half(_time1);
-    time2 = single2half(_time2);
-    time3 = single2half(_time3);
-  }
-  const crtp header;
-  uint8_t packetType;
-  uint8_t synchronize;
-  uint8_t circular0;
-  uint8_t circular1;
-  uint8_t circular2;
-  uint8_t circular3;
-  uint8_t number0;
-  uint8_t number1;
-  uint8_t number2;
-  uint8_t number3;
-  uint16_t time0;
-  uint16_t time1;
-  uint16_t time2;
-  uint16_t time3;
+  crtp header;
+  crtpControlPacketHeader controlHeader; // size 2
+  uint16_t x[3];
+  uint16_t y[3];
+  uint16_t z[3];
+  uint16_t yaw[2];
 } __attribute__((packed));
 
 // Port 13 (Platform)

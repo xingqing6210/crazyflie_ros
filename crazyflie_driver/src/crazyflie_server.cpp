@@ -95,9 +95,6 @@ public:
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_subscribeFullControl = n.subscribe(tf_prefix + "/full_control", 1, &CrazyflieROS::fullControlChanged, this);
-    m_subscribePointPacket = n.subscribe(tf_prefix + "/point_packet", 1, &CrazyflieROS::pointPacketChanged, this);
-    m_subscribeTrajectoryPacket = n.subscribe(tf_prefix + "/trajectory_packet", 1, &CrazyflieROS::trajectoryPacketChanged, this);
-    m_subscribeSynchronizationPacket = n.subscribe(tf_prefix + "/synchronization_packet", 1, &CrazyflieROS::synchronizationPacketChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     if (m_enable_logging_imu) {
@@ -239,51 +236,12 @@ private:
   void fullControlChanged(
     const crazyflie_driver::FullControl::ConstPtr& msg)
   {
-    m_cf.sendFullControl(msg->enable && m_controlEnabled,
-    msg->x[0], msg->x[1], msg->x[2], msg->x[3],
-    msg->y[0], msg->y[1], msg->y[2], msg->y[3],
-    msg->z[0], msg->z[1], msg->z[2], msg->z[3],
+    m_cf.sendFullControl(msg->enable,
+    msg->xmode, msg->x[0], msg->x[1], msg->x[2],
+    msg->ymode, msg->y[0], msg->y[1], msg->y[2],
+    msg->zmode, msg->z[0], msg->z[1], msg->z[2],
     msg->yaw[0], msg->yaw[1]);
     m_sentFullControl = true;
-  }
-
-  void synchronizationPacketChanged(
-    const crazyflie_driver::SynchronizationPacket::ConstPtr& msg)
-  {
-    m_cf.sendSynchronizationPacket(
-    0, // The packet type corresponding to a synchronization data object
-    msg->synchronize,
-    msg->circular[0], msg->circular[1], msg->circular[2], msg->circular[3],
-    msg->number[0], msg->number[1], msg->number[2], msg->number[3],
-    msg->time[0], msg->time[1], msg->time[2], msg->time[3]);
-    m_sentSynchronizationPacket = true;
-    ROS_INFO("Called sendSynchronizationPacket properly.");
-  }
-
-  void trajectoryPacketChanged(
-    const crazyflie_driver::TrajectoryPacket::ConstPtr& msg)
-  {
-    m_cf.sendTrajectoryPacket(
-    1, // The packet type corresponding to a trajectory data object
-    msg->data[0], msg->data[1], msg->data[2],
-    msg->data[3], msg->data[4], msg->data[5],
-    msg->time, msg->index, msg->dimension,
-    msg->number, msg->type);
-    m_sentTrajectoryPacket = true;
-    ROS_INFO("Called sendTrajectoryPacket properly.");
-  }
-
-  void pointPacketChanged(
-    const crazyflie_driver::PointPacket::ConstPtr& msg)
-  {
-    m_cf.sendPointPacket(
-    2, // The packet type corresponding to a point in flat output space (up to 3rd derivatives)
-    m_controlEnabled ? msg->mode : 0,
-    msg->x[0], msg->x[1], msg->x[2], msg->x[3],
-    msg->y[0], msg->y[1], msg->y[2], msg->y[3],
-    msg->z[0], msg->z[1], msg->z[2], msg->z[3],
-    msg->yaw[0], msg->yaw[1]);
-    m_sentPointPacket = true;
   }
 
   void run()
