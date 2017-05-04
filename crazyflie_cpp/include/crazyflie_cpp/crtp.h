@@ -387,15 +387,13 @@ struct crtpExternalPositionUpdate
 extern uint16_t single2half(float number);
 
 struct crtpControlPacketHeader {
-  crtpControlPacketHeader(uint8_t extpos, uint8_t xmode, uint8_t ymode, uint8_t zmode, bool enable)
-  : packetHasExternalReference(extpos)
-  , setEmergency(!enable)
+  crtpControlPacketHeader(uint8_t xmode, uint8_t ymode, uint8_t zmode, bool enable)
+  : setEmergency(!enable)
   , resetEmergency(enable)
   , controlModeX(xmode)
   , controlModeY(ymode)
   , controlModeZ(zmode)
   {}
-  uint16_t packetHasExternalReference:1;
   uint16_t setEmergency:1;
   uint16_t resetEmergency:1;
   uint16_t controlModeX:3;
@@ -410,9 +408,9 @@ struct crtpControlPacket {
     uint8_t xmode, float xpos, float xvel, float xacc,
     uint8_t ymode, float ypos, float yvel, float yacc,
     uint8_t zmode, float zpos, float zvel, float zacc,
-    float yawpos, float yawvel)
+    float yawpos, float _p, float _q, float _r)
   : header(0x07, 0)
-  , controlHeader(0, xmode, ymode, zmode, enable)
+  , controlHeader(xmode, ymode, zmode, enable)
   {
     x[0] = single2half(xpos);
     x[1] = single2half(xvel);
@@ -426,50 +424,18 @@ struct crtpControlPacket {
     z[1] = single2half(zvel);
     z[2] = single2half(zacc);
 
-    yaw[0] = single2half(yawpos);
-    yaw[1] = single2half(yawvel);
+    yaw = single2half(yawpos);
+    p = single2half(_p);
+    q = single2half(_q);
+    r = single2half(_r);
   }
   crtp header;
   crtpControlPacketHeader controlHeader; // size 2
   uint16_t x[3];
   uint16_t y[3];
   uint16_t z[3];
-  uint16_t yaw[2];
-} __attribute__((packed));
-
-struct crtpControlPacketExternalPosition {
-  crtpControlPacketExternalPosition(bool enable,
-    uint8_t xmode, float xpos, float xvel, float xacc, float xext,
-    uint8_t ymode, float ypos, float yvel, float yacc, float yext,
-    uint8_t zmode, float zpos, float zvel, float zacc, float zext,
-    float yawpos, float yawvel)
-  : header(0x07, 0)
-  , controlHeader(1, xmode, ymode, zmode, enable)
-  {
-    x[0] = single2half(xpos);
-    x[1] = single2half(xvel);
-    x[2] = single2half(xacc);
-    x[3] = single2half(xext);
-
-    y[0] = single2half(ypos);
-    y[1] = single2half(yvel);
-    y[2] = single2half(yacc);
-    y[3] = single2half(yext);
-
-    z[0] = single2half(zpos);
-    z[1] = single2half(zvel);
-    z[2] = single2half(zacc);
-    z[3] = single2half(zext);
-
-    yaw[0] = single2half(yawpos);
-    yaw[1] = single2half(yawvel);
-  }
-  crtp header;
-  crtpControlPacketHeader controlHeader; // size 2
-  uint16_t x[4];
-  uint16_t y[4];
-  uint16_t z[4];
-  uint16_t yaw[2];
+  uint16_t yaw;
+  uint16_t p, q, r;
 } __attribute__((packed));
 
 // Port 13 (Platform)

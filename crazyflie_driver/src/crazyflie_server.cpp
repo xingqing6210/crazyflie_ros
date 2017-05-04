@@ -3,7 +3,6 @@
 #include "crazyflie_driver/RemoveCrazyflie.h"
 #include "crazyflie_driver/LogBlock.h"
 #include "crazyflie_driver/FullControl.h"
-#include "crazyflie_driver/FullControlExternalPosition.h"
 #include "crazyflie_driver/SynchronizationPacket.h"
 #include "crazyflie_driver/TrajectoryPacket.h"
 #include "crazyflie_driver/PointPacket.h"
@@ -72,7 +71,6 @@ public:
     , m_subscribeCmdVel()
     , m_subscribeExternalPosition()
     , m_subscribeFullControl()
-    , m_subscribeFullControlExternalPosition()
     , m_subscribeTrajectoryPacket()
     , m_subscribeSynchronizationPacket()
     , m_subscribePointPacket()
@@ -85,7 +83,6 @@ public:
     , m_sentSetpoint(false)
     , m_sentExternalPosition(false)
     , m_sentFullControl(false)
-    , m_sentFullControlExternalPosition(false)
     , m_sentPointPacket(false)
     , m_sentTrajectoryPacket(false)
     , m_sentSynchronizationPacket(false)
@@ -98,7 +95,6 @@ public:
     m_subscribeCmdVel = n.subscribe(tf_prefix + "/cmd_vel", 1, &CrazyflieROS::cmdVelChanged, this);
     m_subscribeExternalPosition = n.subscribe(tf_prefix + "/external_position", 1, &CrazyflieROS::positionMeasurementChanged, this);
     m_subscribeFullControl = n.subscribe(tf_prefix + "/full_control", 1, &CrazyflieROS::fullControlChanged, this);
-    m_subscribeFullControlExternalPosition = n.subscribe(tf_prefix + "/full_control_external_position", 1, &CrazyflieROS::fullControlExternalPositionChanged, this);
     m_serviceEmergency = n.advertiseService(tf_prefix + "/emergency", &CrazyflieROS::emergency, this);
 
     if (m_enable_logging_imu) {
@@ -244,19 +240,8 @@ private:
     msg->xmode, msg->x[0], msg->x[1], msg->x[2],
     msg->ymode, msg->y[0], msg->y[1], msg->y[2],
     msg->zmode, msg->z[0], msg->z[1], msg->z[2],
-    msg->yaw[0], msg->yaw[1]);
+    msg->yaw, msg->p, msg->q, msg->r);
     m_sentFullControl = true;
-  }
-
-  void fullControlExternalPositionChanged(
-    const crazyflie_driver::FullControlExternalPosition::ConstPtr& msg)
-  {
-    m_cf.sendFullControlExternalPosition(msg->enable,
-    msg->xmode, msg->x[0], msg->x[1], msg->x[2], msg->xext,
-    msg->ymode, msg->y[0], msg->y[1], msg->y[2], msg->yext,
-    msg->zmode, msg->z[0], msg->z[1], msg->z[2], msg->zext,
-    msg->yaw[0], msg->yaw[1]);
-    m_sentFullControlExternalPosition = true;
   }
 
   void run()
@@ -390,7 +375,6 @@ private:
           !m_sentSetpoint &&
           !m_sentExternalPosition &&
           !m_sentFullControl &&
-          !m_sentFullControlExternalPosition &&
           !m_sentTrajectoryPacket &&
           !m_sentSynchronizationPacket &&
           !m_sentPointPacket) {
@@ -399,7 +383,6 @@ private:
       m_sentSetpoint = false;
       m_sentExternalPosition = false;
       m_sentFullControl = false;
-      m_sentFullControlExternalPosition = false;
       m_sentTrajectoryPacket = false;
       m_sentSynchronizationPacket = false;
       m_sentPointPacket = false;
@@ -412,7 +395,7 @@ private:
         0, 0, 0, 0,
         0, 0, 0, 0,
         0, 0, 0, 0,
-        0, 0);
+        0, 0 ,0, 0);
     }
 
   }
@@ -538,7 +521,6 @@ private:
   ros::Subscriber m_subscribeCmdVel;
   ros::Subscriber m_subscribeExternalPosition;
   ros::Subscriber m_subscribeFullControl;
-  ros::Subscriber m_subscribeFullControlExternalPosition;
   ros::Subscriber m_subscribeSynchronizationPacket;
   ros::Subscriber m_subscribeTrajectoryPacket;
   ros::Subscriber m_subscribePointPacket;
@@ -550,7 +532,7 @@ private:
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
 
-  bool m_sentSetpoint, m_sentExternalPosition, m_sentFullControl, m_sentFullControlExternalPosition, m_controlEnabled;
+  bool m_sentSetpoint, m_sentExternalPosition, m_sentFullControl, m_controlEnabled;
   bool m_sentSynchronizationPacket, m_synchronizationPacketEnabled;
   bool m_sentTrajectoryPacket, m_trajectoryPacketEnabled;
   bool m_sentPointPacket, m_pointPacketEnabled;

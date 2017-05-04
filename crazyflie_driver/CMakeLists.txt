@@ -41,7 +41,6 @@ add_message_files(
   LogBlock.msg
   GenericLogData.msg
   FullControl.msg
-  FullControlExternalPosition.msg
   TrajectoryPacket.msg
   SynchronizationPacket.msg
   PointPacket.msg

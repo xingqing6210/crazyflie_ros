@@ -122,29 +122,14 @@ void Crazyflie::sendFullControl(
     uint8_t xmode, float xpos, float xvel, float xacc,
     uint8_t ymode, float ypos, float yvel, float yacc,
     uint8_t zmode, float zpos, float zvel, float zacc,
-    float yawpos, float yawvel)
+    float yaw, float p, float q, float r)
 {
   crtpControlPacket control(enable,
     xmode, xpos, xvel, xacc,
     ymode, ypos, yvel, yacc,
     zmode, zpos, zvel, zacc,
-    yawpos, yawvel);
-  sendPacket((const uint8_t*)&control, sizeof(control)); 
-}
-
-void Crazyflie::sendFullControlExternalPosition(
-    bool enable,
-    uint8_t xmode, float xpos, float xvel, float xacc, float xext,
-    uint8_t ymode, float ypos, float yvel, float yacc, float yext,
-    uint8_t zmode, float zpos, float zvel, float zacc, float zext,
-    float yawpos, float yawvel)
-{
-  crtpControlPacketExternalPosition control(enable,
-    xmode, xpos, xvel, xacc, xext,
-    ymode, ypos, yvel, yacc, yext,
-    zmode, zpos, zvel, zacc, zext,
-    yawpos, yawvel);
-  sendPacket((const uint8_t*)&control, sizeof(control)); 
+    yaw, p, q, r);
+  sendPacket((const uint8_t*)&control, sizeof(control));
 }
 
 void Crazyflie::sendPing()
